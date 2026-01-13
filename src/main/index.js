@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 
 let mainWindow;
@@ -28,6 +28,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Disable default menu
+  Menu.setApplicationMenu(null);
+  
   // IPC handlers will be initialized here later
   require('./ipc'); 
   
