@@ -58,12 +58,26 @@
                 <div class="panel-header">
                     <span>接收区</span>
                     <div class="controls">
-                        <input type="text" id="input-filter" placeholder="过滤关键词..." style="width: 120px; padding: 2px 5px; font-size: 12px;">
+                        <button id="btn-toggle-filter" class="btn btn-sm">过滤规则 (0)</button>
                         <label><input type="checkbox" id="chk-auto-scroll" checked> 自动滚动</label>
                         <label><input type="checkbox" id="chk-hide-send"> 隐藏发送区</label>
                         <label><input type="checkbox" id="chk-hex-show"> HEX显示</label>
                         <button id="btn-save-recv" class="btn btn-sm">保存</button>
                         <button id="btn-clear-recv" class="btn btn-sm">清空</button>
+                    </div>
+                </div>
+                <!-- Filter Management Panel -->
+                <div id="filter-manager" class="filter-manager" style="display: none;">
+                    <div class="filter-input-row">
+                        <select id="sel-filter-type">
+                            <option value="include">包含</option>
+                            <option value="exclude">排除</option>
+                        </select>
+                        <input type="text" id="input-new-filter" placeholder="输入关键词...">
+                        <button id="btn-add-filter" class="btn btn-sm btn-primary">添加</button>
+                    </div>
+                    <div id="filter-tags" class="filter-tags">
+                        <!-- Tags will be added here -->
                     </div>
                 </div>
                 <div id="receive-area" class="text-area"></div>

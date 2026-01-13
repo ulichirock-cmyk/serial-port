@@ -17,11 +17,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnClearRecv = document.getElementById('btn-clear-recv');
     const btnSaveRecv = document.getElementById('btn-save-recv');
     const chkAutoScroll = document.getElementById('chk-auto-scroll');
-    const inputFilter = document.getElementById('input-filter');
+    const btnToggleFilter = document.getElementById('btn-toggle-filter');
+    const filterManager = document.getElementById('filter-manager');
+    const selFilterType = document.getElementById('sel-filter-type');
+    const inputNewFilter = document.getElementById('input-new-filter');
+    const btnAddFilter = document.getElementById('btn-add-filter');
+    const filterTagsContainer = document.getElementById('filter-tags');
     const chkHideSend = document.getElementById('chk-hide-send');
     const chkHexShow = document.getElementById('chk-hex-show');
     const chkHexSend = document.getElementById('chk-hex-send');
     const sendPanelContainer = document.getElementById('send-panel-container');
+    
+    // State
+    let filterRules = []; // Array of { text, type }
     
     // Auto Send Controls
     const chkAutoSend = document.getElementById('chk-auto-send');
@@ -43,6 +51,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     btnSend.addEventListener('click', sendData);
+
+    // Filter Management Logic
+    btnToggleFilter.addEventListener('click', () => {
+        const isHidden = filterManager.style.display === 'none';
+        filterManager.style.display = isHidden ? 'flex' : 'none';
+        btnToggleFilter.classList.toggle('btn-primary', isHidden);
+    });
+
+    btnAddFilter.addEventListener('click', () => {
+        const text = inputNewFilter.value.trim().toLowerCase();
+        if (!text) return;
+        
+        // Check for duplicates
+        if (filterRules.some(r => r.text === text && r.type === selFilterType.value)) {
+            alert('该规则已存在');
+            return;
+        }
+
+        filterRules.push({
+            text: text,
+            type: selFilterType.value
+        });
+        
+        inputNewFilter.value = '';
+        renderFilterTags();
+    });
+
+    inputNewFilter.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') btnAddFilter.click();
+    });
+
+    function renderFilterTags() {
+        filterTagsContainer.innerHTML = '';
+        filterRules.forEach((rule, index) => {
+            const tag = document.createElement('div');
+            tag.className = `filter-tag ${rule.type}`;
+            tag.innerHTML = `
+                <span>${rule.type === 'include' ? '+' : '-'} ${rule.text}</span>
+                <span class="remove" data-index="${index}">&times;</span>
+            `;
+            filterTagsContainer.appendChild(tag);
+        });
+        
+        btnToggleFilter.textContent = `过滤规则 (${filterRules.length})`;
+        
+        // Add remove events
+        filterTagsContainer.querySelectorAll('.remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                filterRules.splice(index, 1);
+                renderFilterTags();
+            });
+        });
+    }
 
     // Enter to Send
     sendArea.addEventListener('keydown', (e) => {
@@ -241,15 +303,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const lines = completeData.split('\n');
                 let htmlOutput = '';
-                const filterText = inputFilter.value.trim().toLowerCase();
                 
                 lines.forEach(line => {
                     const trimmedLine = line.trim();
                     if (trimmedLine === '') return;
                     
-                    // Filter Logic
-                    if (filterText && !trimmedLine.toLowerCase().includes(filterText)) {
-                        return; // Skip line if it doesn't match filter
+                    // Multiple Filter Logic
+                    const lowerLine = trimmedLine.toLowerCase();
+                    
+                    // 1. Check Excludes (if any match, reject)
+                    const isExcluded = filterRules.some(r => r.type === 'exclude' && lowerLine.includes(r.text));
+                    if (isExcluded) return;
+                    
+                    // 2. Check Includes (if exist, must match at least one)
+                    const includeRules = filterRules.filter(r => r.type === 'include');
+                    if (includeRules.length > 0) {
+                        const isIncluded = includeRules.some(r => lowerLine.includes(r.text));
+                        if (!isIncluded) return;
                     }
                     
                     htmlOutput += processLogLine(trimmedLine) + '\n'; 

@@ -130,6 +130,54 @@ select, button, input[type="text"] {
     outline: none;
 }
 
+/* Filter Manager */
+.filter-manager {
+    padding: 8px 10px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-input-row {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.filter-input-row input {
+    flex: 1;
+}
+
+.filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    color: white;
+    gap: 5px;
+}
+
+.filter-tag.include { background-color: #28a745; }
+.filter-tag.exclude { background-color: #dc3545; }
+
+.filter-tag .remove {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.filter-tag .remove:hover { color: #eee; }
+
 #receive-area {
     background-color: #fafafa;
     white-space: pre-wrap;
