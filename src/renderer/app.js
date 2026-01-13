@@ -40,15 +40,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize
     await refreshPorts();
+    initSettings();
     initTheme();
 
     // Event Listeners
     btnRefreshPorts.addEventListener('click', refreshPorts);
-    btnOpen.addEventListener('click', toggleConnection);
+    btnOpen.addEventListener('click', () => {
+        saveSettings();
+        toggleConnection();
+    });
     
     selTheme.addEventListener('change', () => {
         applyTheme(selTheme.value);
     });
+
+    function initSettings() {
+        const savedBaud = localStorage.getItem('serial-baud');
+        if (savedBaud) {
+            baudSelect.value = savedBaud;
+        }
+    }
+
+    function saveSettings() {
+        localStorage.setItem('serial-port', portSelect.value);
+        localStorage.setItem('serial-baud', baudSelect.value);
+    }
 
     function initTheme() {
         const savedTheme = localStorage.getItem('app-theme') || 'default';
@@ -234,6 +250,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 option.text = `${port.path} - ${port.manufacturer || ''}`;
                 portSelect.add(option);
             });
+
+            // Restore saved port if it exists in the new list
+            const savedPort = localStorage.getItem('serial-port');
+            if (savedPort) {
+                const exists = Array.from(portSelect.options).some(opt => opt.value === savedPort);
+                if (exists) {
+                    portSelect.value = savedPort;
+                }
+            }
+            
             console.log('[Renderer] Port select updated');
         } catch (err) {
             console.error('[Renderer] Failed to list ports:', err);
