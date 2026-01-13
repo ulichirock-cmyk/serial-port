@@ -1,0 +1,173 @@
+:root {
+    --bg-color: #f0f0f0;
+    --panel-bg: #ffffff;
+    --border-color: #cccccc;
+    --primary-color: #007bff;
+    --text-color: #333333;
+    --status-bar-bg: #007bff;
+    --status-bar-text: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: var(--panel-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.config-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+select, button, input[type="text"] {
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.panel {
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+}
+
+.receive-panel {
+    flex: 2;
+    overflow: hidden;
+}
+
+.send-panel {
+    flex: 1;
+    min-height: 150px;
+}
+
+.panel-header {
+    padding: 5px 10px;
+    background-color: #e9ecef;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-weight: normal;
+    font-size: 12px;
+}
+
+.text-area {
+    flex: 1;
+    width: 100%;
+    resize: none;
+    border: none;
+    padding: 10px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    overflow-y: auto;
+    outline: none;
+}
+
+#receive-area {
+    background-color: #fafafa;
+    white-space: pre-wrap;
+}
+
+.send-actions {
+    padding: 5px 10px;
+    border-top: 1px solid var(--border-color);
+    text-align: right;
+}
+
+/* Buttons */
+.btn {
+    cursor: pointer;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    transition: background-color 0.2s;
+}
+
+.btn:hover {
+    background-color: #d0d0d0;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-sm {
+    padding: 2px 8px;
+    font-size: 12px;
+}
+
+/* Status Bar */
+.status-bar {
+    height: 25px;
+    background-color: var(--status-bar-bg);
+    color: var(--status-bar-text);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 12px;
+    justify-content: space-between;
+}
