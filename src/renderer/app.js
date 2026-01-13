@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const portSelect = document.getElementById('port-select');
     const btnRefreshPorts = document.getElementById('btn-refresh-ports');
     const baudSelect = document.getElementById('baud-rate');
+    const selTheme = document.getElementById('sel-theme');
     const btnOpen = document.getElementById('btn-open');
     const statusText = document.getElementById('status-text');
     const statusInfo = document.getElementById('status-info');
@@ -42,11 +43,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize
     await refreshPorts();
+    initTheme();
 
     // Event Listeners
     btnRefreshPorts.addEventListener('click', refreshPorts);
     btnOpen.addEventListener('click', toggleConnection);
     
+    selTheme.addEventListener('change', () => {
+        applyTheme(selTheme.value);
+    });
+
+    // ... (existing code) ...
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('app-theme') || 'default';
+        selTheme.value = savedTheme;
+        applyTheme(savedTheme);
+    }
+
+    function applyTheme(themeName) {
+        document.body.classList.remove('theme-dark', 'theme-green', 'theme-purple');
+        if (themeName !== 'default') {
+            document.body.classList.add(`theme-${themeName}`);
+        }
+        localStorage.setItem('app-theme', themeName);
+    }
+
     // Data Handling
     window.electronAPI.onSerialData((data) => {
         // data is Uint8Array (from Buffer)
