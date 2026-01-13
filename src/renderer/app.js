@@ -233,8 +233,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let htmlOutput = '';
                 
                 lines.forEach(line => {
-                    if (line.trim() === '') return;
-                    htmlOutput += processLogLine(line) + '\n'; 
+                    const trimmedLine = line.trim();
+                    if (trimmedLine === '') return;
+                    htmlOutput += processLogLine(trimmedLine) + '\n'; 
                 });
 
                 receiveArea.insertAdjacentHTML('beforeend', htmlOutput);
