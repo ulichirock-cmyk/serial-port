@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // State
     let filterRules = []; // Array of { text, type }
+    const MAX_DISPLAY_LINES = 2000; // Keep only last 2000 lines
+    let pendingHtml = ''; // Buffer for batched rendering
+    let renderTimer = null;
     
     // Auto Send Controls
     const chkAutoSend = document.getElementById('chk-auto-send');
@@ -289,9 +292,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         // data comes as Uint8Array/Buffer
         if (chkHexShow.checked) {
             const timestamp = window.AppUtils.getTimestamp() + ' ';
-            const displayStr = timestamp + window.AppUtils.toHexString(data) + '\n';
-            receiveArea.textContent += displayStr;
+            const displayStr = `<div class="log-line">${timestamp}${window.AppUtils.toHexString(data)}</div>`;
+            receiveArea.insertAdjacentHTML('beforeend', displayStr);
             rawBuffer = ''; 
+            checkLineLimit();
+            if (chkAutoScroll.checked) receiveArea.scrollTop = receiveArea.scrollHeight;
         } else {
             const text = new TextDecoder().decode(data);
             rawBuffer += text;
@@ -302,36 +307,57 @@ document.addEventListener('DOMContentLoaded', async () => {
                 rawBuffer = rawBuffer.substring(lastNewline + 1);
 
                 const lines = completeData.split('\n');
-                let htmlOutput = '';
+                let batchHtml = '';
                 
                 lines.forEach(line => {
                     const trimmedLine = line.trim();
                     if (trimmedLine === '') return;
                     
-                    // Multiple Filter Logic
                     const lowerLine = trimmedLine.toLowerCase();
-                    
-                    // 1. Check Excludes (if any match, reject)
                     const isExcluded = filterRules.some(r => r.type === 'exclude' && lowerLine.includes(r.text));
                     if (isExcluded) return;
                     
-                    // 2. Check Includes (if exist, must match at least one)
                     const includeRules = filterRules.filter(r => r.type === 'include');
                     if (includeRules.length > 0) {
                         const isIncluded = includeRules.some(r => lowerLine.includes(r.text));
                         if (!isIncluded) return;
                     }
                     
-                    htmlOutput += processLogLine(trimmedLine) + '\n'; 
+                    batchHtml += processLogLine(trimmedLine);
                 });
 
-                receiveArea.insertAdjacentHTML('beforeend', htmlOutput);
+                if (batchHtml) {
+                    pendingHtml += batchHtml;
+                    scheduleRender();
+                }
             }
         }
-        
-        // Auto scroll
-        if (chkAutoScroll.checked) {
-            receiveArea.scrollTop = receiveArea.scrollHeight;
+    }
+
+    function scheduleRender() {
+        if (renderTimer) return;
+        renderTimer = setTimeout(() => {
+            if (pendingHtml) {
+                receiveArea.insertAdjacentHTML('beforeend', pendingHtml);
+                pendingHtml = '';
+                checkLineLimit();
+                if (chkAutoScroll.checked) {
+                    receiveArea.scrollTop = receiveArea.scrollHeight;
+                }
+            }
+            renderTimer = null;
+        }, 50); // Batch updates every 50ms
+    }
+
+    function checkLineLimit() {
+        const lineCount = receiveArea.childElementCount;
+        if (lineCount > MAX_DISPLAY_LINES) {
+            const linesToRemove = lineCount - MAX_DISPLAY_LINES;
+            for (let i = 0; i < linesToRemove; i++) {
+                if (receiveArea.firstChild) {
+                    receiveArea.removeChild(receiveArea.firstChild);
+                }
+            }
         }
     }
 
@@ -365,13 +391,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 contentClass = 'log-info';
             }
 
-            return `<span class="log-time">${timestamp}</span><span class="log-meta">${meta}</span><span class="log-proc">${process}</span><span class="${contentClass}">${content}</span>`;
+            return `<div class="log-line"><span class="log-time">${timestamp}</span><span class="log-meta">${meta}</span><span class="log-proc">${process}</span><span class="${contentClass}">${content}</span></div>`;
         } else {
             const escapedLine = escapeHtml(line);
             if (escapedLine.toLowerCase().includes('error') || escapedLine.toLowerCase().includes('fail')) {
-                return `<span class="log-err">${escapedLine}</span>`;
+                return `<div class="log-line"><span class="log-err">${escapedLine}</span></div>`;
             }
-            return `<span class="log-content">${escapedLine}</span>`;
+            return `<div class="log-line"><span class="log-content">${escapedLine}</span></div>`;
         }
     }
 
