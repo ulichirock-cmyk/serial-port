@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnClearRecv = document.getElementById('btn-clear-recv');
     const btnSaveRecv = document.getElementById('btn-save-recv');
     const chkAutoScroll = document.getElementById('chk-auto-scroll');
+    const inputFilter = document.getElementById('input-filter');
     const chkHideSend = document.getElementById('chk-hide-send');
     const chkHexShow = document.getElementById('chk-hex-show');
     const chkHexSend = document.getElementById('chk-hex-send');
@@ -240,10 +241,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const lines = completeData.split('\n');
                 let htmlOutput = '';
+                const filterText = inputFilter.value.trim().toLowerCase();
                 
                 lines.forEach(line => {
                     const trimmedLine = line.trim();
                     if (trimmedLine === '') return;
+                    
+                    // Filter Logic
+                    if (filterText && !trimmedLine.toLowerCase().includes(filterText)) {
+                        return; // Skip line if it doesn't match filter
+                    }
+                    
                     htmlOutput += processLogLine(trimmedLine) + '\n'; 
                 });
 
