@@ -26,41 +26,49 @@ body {
 
 .container {
     display: flex;
+    flex-direction: column;
     flex: 1;
     overflow: hidden;
 }
 
-/* Sidebar */
-.sidebar {
-    width: 250px;
+/* Top Bar */
+.top-bar {
     background-color: var(--panel-bg);
-    border-right: 1px solid var(--border-color);
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
+    border-bottom: 1px solid var(--border-color);
+    padding: 5px 10px;
+    z-index: 10;
 }
 
 .config-panel {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    align-items: center;
+}
+
+.form-inline {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
 }
 
 .form-group {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     gap: 5px;
 }
 
 .form-group label {
     font-size: 12px;
     font-weight: bold;
+    white-space: nowrap;
 }
 
 select, button, input[type="text"] {
-    padding: 5px;
+    padding: 2px 5px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
+    font-size: 12px;
 }
 
 /* Main Content */
