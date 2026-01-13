@@ -77,6 +77,24 @@ body {
     transition: background-color 0.3s, color 0.3s;
 }
 
+/* Custom Title Bar */
+.window-title-bar {
+    height: 30px;
+    background-color: var(--header-bg);
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    -webkit-app-region: drag; /* Make it draggable */
+    user-select: none;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.window-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
 .container {
     display: flex;
     flex-direction: column;

@@ -63,9 +63,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function applyTheme(themeName) {
         document.body.classList.remove('theme-dark', 'theme-green', 'theme-purple');
+        
+        let overlayConfig = { color: '#e9ecef', symbolColor: '#333333' }; // Default
+        
         if (themeName !== 'default') {
             document.body.classList.add(`theme-${themeName}`);
+            
+            // Adjust native window buttons based on theme
+            if (themeName === 'dark') {
+                overlayConfig = { color: '#333333', symbolColor: '#cccccc' };
+            } else if (themeName === 'green') {
+                overlayConfig = { color: '#d4e3b5', symbolColor: '#2e4a2e' };
+            } else if (themeName === 'purple') {
+                overlayConfig = { color: '#ede7f6', symbolColor: '#311b92' };
+            }
         }
+        
+        window.electronAPI.updateTitleBar(overlayConfig);
         localStorage.setItem('app-theme', themeName);
     }
 

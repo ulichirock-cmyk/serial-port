@@ -15,5 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   
   // File System Methods
-  saveFile: (data) => ipcRenderer.invoke('file:save', data)
+  saveFile: (data) => ipcRenderer.invoke('file:save', data),
+
+  // Window Methods
+  updateTitleBar: (config) => ipcRenderer.invoke('window:update-titlebar', config)
 });

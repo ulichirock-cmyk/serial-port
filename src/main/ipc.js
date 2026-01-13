@@ -31,6 +31,13 @@ ipcMain.handle('file:save', async (event, content) => {
   return await fileManager.saveFile(content);
 });
 
+ipcMain.handle('window:update-titlebar', async (event, config) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    win.setTitleBarOverlay(config);
+  }
+});
+
 // Event Forwarding (Main -> Renderer)
 serialManager.on('data', (data) => {
   // Send to all windows (usually just one)
