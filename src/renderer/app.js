@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const receiveArea = document.getElementById('receive-area');
     const btnClearRecv = document.getElementById('btn-clear-recv');
     const btnSaveRecv = document.getElementById('btn-save-recv');
+    const chkAutoScroll = document.getElementById('chk-auto-scroll');
     const chkHideSend = document.getElementById('chk-hide-send');
     const chkHexShow = document.getElementById('chk-hex-show');
     const chkHexSend = document.getElementById('chk-hex-send');
@@ -41,6 +42,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     btnSend.addEventListener('click', sendData);
+
+    // Enter to Send
+    sendArea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault(); // Prevent newline
+            sendData();
+        }
+    });
 
     // Hide Send Area Logic
     chkHideSend.addEventListener('change', () => {
@@ -241,7 +250,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 receiveArea.insertAdjacentHTML('beforeend', htmlOutput);
             }
         }
-        receiveArea.scrollTop = receiveArea.scrollHeight;
+        
+        // Auto scroll
+        if (chkAutoScroll.checked) {
+            receiveArea.scrollTop = receiveArea.scrollHeight;
+        }
     }
 
     function escapeHtml(text) {
