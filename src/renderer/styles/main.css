@@ -181,6 +181,8 @@ select, button, input[type="text"] {
     font-size: 14px;
     overflow-y: auto;
     outline: none;
+    background-color: var(--receive-bg);
+    color: var(--text-color);
 }
 
 /* Filter Manager */
@@ -232,7 +234,6 @@ select, button, input[type="text"] {
 .filter-tag .remove:hover { color: #eee; }
 
 #receive-area {
-    background-color: #fafafa;
     white-space: pre-wrap;
     word-break: break-all;
     overflow-x: hidden;
