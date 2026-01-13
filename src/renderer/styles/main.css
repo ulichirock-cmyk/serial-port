@@ -133,6 +133,8 @@ select, button, input[type="text"] {
 #receive-area {
     background-color: #fafafa;
     white-space: pre-wrap;
+    word-break: break-all;
+    overflow-x: hidden;
     font-size: 13px; /* Slightly smaller for logs */
 }
 
