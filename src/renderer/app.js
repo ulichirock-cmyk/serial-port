@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // UI Elements
     const portSelect = document.getElementById('port-select');
+    const btnRefreshPorts = document.getElementById('btn-refresh-ports');
     const baudSelect = document.getElementById('baud-rate');
     const btnOpen = document.getElementById('btn-open');
     const statusText = document.getElementById('status-text');
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await refreshPorts();
 
     // Event Listeners
+    btnRefreshPorts.addEventListener('click', refreshPorts);
     btnOpen.addEventListener('click', toggleConnection);
     
     // Send/Receive Elements

@@ -14,9 +14,12 @@
                 <h3>串口设置</h3>
                 <div class="form-group">
                     <label>端口号</label>
-                    <select id="port-select">
-                        <option value="">刷新中...</option>
-                    </select>
+                    <div style="display: flex; gap: 5px;">
+                        <select id="port-select" style="flex: 1;">
+                            <option value="">刷新中...</option>
+                        </select>
+                        <button id="btn-refresh-ports" class="btn btn-sm">刷新</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>波特率</label>
