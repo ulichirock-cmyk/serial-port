@@ -61,6 +61,7 @@
                 <div class="panel-header">
                     <span>接收区</span>
                     <div class="controls">
+                        <label><input type="checkbox" id="chk-hide-send"> 隐藏发送区</label>
                         <label><input type="checkbox" id="chk-hex-show"> HEX显示</label>
                         <button id="btn-save-recv" class="btn btn-sm">保存</button>
                         <button id="btn-clear-recv" class="btn btn-sm">清空</button>
@@ -70,7 +71,7 @@
             </div>
 
             <!-- Send Area -->
-            <div class="panel send-panel">
+            <div id="send-panel-container" class="panel send-panel">
                 <div class="panel-header">
                     <span>发送区</span>
                     <div class="controls">

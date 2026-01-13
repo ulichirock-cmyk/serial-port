@@ -125,7 +125,20 @@ select, button, input[type="text"] {
 #receive-area {
     background-color: #fafafa;
     white-space: pre-wrap;
+    font-size: 13px; /* Slightly smaller for logs */
 }
+
+/* Log Highlighting */
+.log-time { color: #009688; font-weight: bold; } /* Teal */
+.log-meta { color: #795548; } /* Brown */
+.log-proc { color: #673ab7; font-weight: bold; } /* Deep Purple */
+.log-content { color: #212121; } /* Dark Grey */
+
+/* Special Content Highlighting */
+.log-err { color: #d32f2f; font-weight: bold; } /* Red */
+.log-warn { color: #f57c00; } /* Orange */
+.log-info { color: #1976d2; } /* Blue */
+.log-debug { color: #757575; } /* Grey */
 
 .send-actions {
     padding: 5px 10px;

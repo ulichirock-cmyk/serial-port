@@ -4,7 +4,15 @@ const fileManager = require('./file');
 
 // IPC Handlers
 ipcMain.handle('serial:list', async () => {
-  return await serialManager.listPorts();
+  console.log('[IPC] serial:list called');
+  try {
+    const ports = await serialManager.listPorts();
+    console.log('[IPC] serial:list returning', ports.length, 'ports');
+    return ports;
+  } catch (err) {
+    console.error('[IPC] serial:list error:', err);
+    throw err;
+  }
 });
 
 ipcMain.handle('serial:open', async (event, config) => {

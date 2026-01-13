@@ -13,11 +13,13 @@ class SerialManager extends EventEmitter {
    * @returns {Promise<PortInfo[]>}
    */
   async listPorts() {
+    console.log('[SerialManager] Listing ports...');
     try {
       const ports = await SerialPort.list();
+      console.log('[SerialManager] Found ports:', ports);
       return ports;
     } catch (err) {
-      console.error('Error listing ports:', err);
+      console.error('[SerialManager] Error listing ports:', err);
       throw err;
     }
   }

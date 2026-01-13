@@ -10,6 +10,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     // State
     let isConnected = false;
 
+    // Send/Receive Elements
+    const btnSend = document.getElementById('btn-send');
+    const sendArea = document.getElementById('send-area');
+    const receiveArea = document.getElementById('receive-area');
+    const btnClearRecv = document.getElementById('btn-clear-recv');
+    const btnSaveRecv = document.getElementById('btn-save-recv');
+    const chkHideSend = document.getElementById('chk-hide-send');
+    const chkHexShow = document.getElementById('chk-hex-show');
+    const chkHexSend = document.getElementById('chk-hex-send');
+    const sendPanelContainer = document.getElementById('send-panel-container');
+    
+    // Auto Send Controls
+    const chkAutoSend = document.getElementById('chk-auto-send');
+    const inputAutoInterval = document.getElementById('input-auto-interval');
+    let autoSendTimer = null;
+    let rawBuffer = ''; // Buffer for incoming text data to handle split lines
+
     // Initialize
     await refreshPorts();
 
@@ -17,20 +34,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnRefreshPorts.addEventListener('click', refreshPorts);
     btnOpen.addEventListener('click', toggleConnection);
     
-    // Send/Receive Elements
-    const btnSend = document.getElementById('btn-send');
-    const sendArea = document.getElementById('send-area');
-    const receiveArea = document.getElementById('receive-area');
-    const btnClearRecv = document.getElementById('btn-clear-recv');
-    const btnSaveRecv = document.getElementById('btn-save-recv');
-    const chkHexShow = document.getElementById('chk-hex-show');
-    const chkHexSend = document.getElementById('chk-hex-send');
-    
-    // Auto Send Controls
-    const chkAutoSend = document.getElementById('chk-auto-send');
-    const inputAutoInterval = document.getElementById('input-auto-interval');
-    let autoSendTimer = null;
-
     // Data Handling
     window.electronAPI.onSerialData((data) => {
         // data is Uint8Array (from Buffer)
@@ -38,6 +41,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     btnSend.addEventListener('click', sendData);
+
+    // Hide Send Area Logic
+    chkHideSend.addEventListener('change', () => {
+        if (chkHideSend.checked) {
+            sendPanelContainer.style.display = 'none';
+        } else {
+            sendPanelContainer.style.display = 'flex';
+        }
+    });
     
     // Auto Send Logic
     chkAutoSend.addEventListener('change', () => {
@@ -94,11 +106,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Functions
     async function refreshPorts() {
+        console.log('[Renderer] refreshPorts called');
         try {
+            console.log('[Renderer] Requesting port list from Main...');
             const ports = await window.electronAPI.listPorts();
+            console.log('[Renderer] Received ports:', ports);
+            
             portSelect.innerHTML = '';
             
-            if (ports.length === 0) {
+            if (!ports || ports.length === 0) {
+                console.log('[Renderer] No ports found');
                 const option = document.createElement('option');
                 option.text = '未找到串口';
                 portSelect.add(option);
@@ -111,9 +128,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 option.text = `${port.path} - ${port.manufacturer || ''}`;
                 portSelect.add(option);
             });
+            console.log('[Renderer] Port select updated');
         } catch (err) {
-            console.error('Failed to list ports:', err);
+            console.error('[Renderer] Failed to list ports:', err);
             statusText.textContent = '获取串口列表失败';
+            portSelect.innerHTML = '<option value="">获取失败</option>';
         }
     }
 
@@ -196,43 +215,89 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function displayData(data) {
         // data comes as Uint8Array/Buffer
-        let displayStr = '';
-        const timestamp = window.AppUtils.getTimestamp() + ' ';
-        
         if (chkHexShow.checked) {
-            // Convert to HEX string
-            displayStr = timestamp + window.AppUtils.toHexString(data) + '\n';
+            const timestamp = window.AppUtils.getTimestamp() + ' ';
+            const displayStr = timestamp + window.AppUtils.toHexString(data) + '\n';
+            receiveArea.textContent += displayStr;
+            rawBuffer = ''; 
         } else {
-            // Convert to Text
-            // Note: Adding timestamp to raw text stream might break formatting if not line-based.
-            // For simple display, we prepend it if it's a new "packet" event.
-            displayStr = new TextDecoder().decode(data);
-            // Optional: If you want timestamp on text mode, it's tricky without knowing line breaks.
-            // Simplified: Just append raw text for now, or append timestamp if previous char was newline.
-        }
+            const text = new TextDecoder().decode(data);
+            rawBuffer += text;
+            
+            let lastNewline = rawBuffer.lastIndexOf('\n');
+            if (lastNewline !== -1) {
+                const completeData = rawBuffer.substring(0, lastNewline + 1);
+                rawBuffer = rawBuffer.substring(lastNewline + 1);
 
-        // Append to Text Area
-        receiveArea.textContent += displayStr;
-        
-        // Auto scroll
+                const lines = completeData.split('\n');
+                let htmlOutput = '';
+                
+                lines.forEach(line => {
+                    if (line.trim() === '') return;
+                    htmlOutput += processLogLine(line) + '\n'; 
+                });
+
+                receiveArea.insertAdjacentHTML('beforeend', htmlOutput);
+            }
+        }
         receiveArea.scrollTop = receiveArea.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function processLogLine(line) {
+        const regex = /^(\[\s*[\d\.]+\s*\])(\s*<[^>]+>[\.\-]\(\d+\))?(\s*\[[^\]]+\])?(.*)$/;
+        const match = line.match(regex);
+
+        if (match) {
+            const timestamp = escapeHtml(match[1] || '');
+            const meta = escapeHtml(match[2] || '');
+            const process = escapeHtml(match[3] || '');
+            let content = escapeHtml(match[4] || '');
+            
+            let contentClass = 'log-content';
+            if (content.includes('avc: denied') || content.includes('audit:')) {
+                contentClass = 'log-err';
+            } else if (content.toLowerCase().includes('error') || content.toLowerCase().includes('fail')) {
+                contentClass = 'log-err';
+            } else if (content.toLowerCase().includes('warning')) {
+                contentClass = 'log-warn';
+            } else if (content.includes('BOOTPROF')) {
+                contentClass = 'log-info';
+            }
+
+            return `<span class="log-time">${timestamp}</span><span class="log-meta">${meta}</span><span class="log-proc">${process}</span><span class="${contentClass}">${content}</span>`;
+        } else {
+            const escapedLine = escapeHtml(line);
+            if (escapedLine.toLowerCase().includes('error') || escapedLine.toLowerCase().includes('fail')) {
+                return `<span class="log-err">${escapedLine}</span>`;
+            }
+            return `<span class="log-content">${escapedLine}</span>`;
+        }
     }
 
     function updateUIState(connected) {
         if (connected) {
             btnOpen.textContent = '关闭串口';
             btnOpen.classList.remove('btn-primary');
-            btnOpen.style.backgroundColor = '#dc3545'; // Red
+            btnOpen.style.backgroundColor = '#dc3545';
             btnOpen.style.color = 'white';
             portSelect.disabled = true;
             baudSelect.disabled = true;
             statusText.textContent = '已连接';
-            statusText.style.color = '#28a745'; // Green
+            statusText.style.color = '#28a745';
             statusInfo.textContent = `${portSelect.value} | ${baudSelect.value}`;
         } else {
             btnOpen.textContent = '打开串口';
             btnOpen.classList.add('btn-primary');
-            btnOpen.style.backgroundColor = ''; // Reset
+            btnOpen.style.backgroundColor = '';
             btnOpen.style.color = '';
             portSelect.disabled = false;
             baudSelect.disabled = false;
