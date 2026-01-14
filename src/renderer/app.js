@@ -462,6 +462,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 await window.electronAPI.closePort();
                 isConnected = false;
+                
+                // Stop Auto Send if active
+                if (chkAutoSend.checked) {
+                    chkAutoSend.checked = false;
+                    if (autoSendTimer) {
+                        clearInterval(autoSendTimer);
+                        autoSendTimer = null;
+                    }
+                    inputAutoInterval.disabled = false;
+                }
+
                 updateUIState(false);
             } catch (err) {
                 console.error('Failed to close port:', err);
