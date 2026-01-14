@@ -31,9 +31,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // State
     let filterRules = []; // Array of { text, type }
-    let receivedLines = [];
+    let receivedLines = []; // Array of { id, text }
     const MAX_STORED_LINES = 20000;
+    let globalLineId = 0;
     
+    // Search State
+    let searchKeyword = '';
+    const btnToggleSearch = document.getElementById('btn-toggle-search');
+    const searchBar = document.getElementById('search-bar');
+    const inputSearch = document.getElementById('input-search');
+    const btnSearchExec = document.getElementById('btn-search-exec');
+    const btnSearchClose = document.getElementById('btn-search-close');
+    const searchStats = document.getElementById('search-stats');
+    const searchResultsPanel = document.getElementById('search-results-panel');
+    const searchResultsList = document.getElementById('search-results-list');
+    const panelResizer = document.getElementById('panel-resizer');
+
     // Auto Send Controls
     const chkAutoSend = document.getElementById('chk-auto-send');
     const inputAutoInterval = document.getElementById('input-auto-interval');
@@ -45,10 +58,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     initSettings();
     initTheme();
     initSendPanelVisibility();
+    initSearch();
+    initResizer();
 
     // Helper: Check if a line should be displayed based on current filters
-    function checkFilter(line) {
-        const lowerLine = line.toLowerCase();
+    function checkFilter(lineText) {
+        const lowerLine = lineText.toLowerCase();
         
         // 1. Check Exclude Rules first
         const isExcluded = filterRules.some(r => r.type === 'exclude' && lowerLine.includes(r.text));
@@ -62,6 +77,108 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         return true;
+    }
+
+    // Search Logic
+    function initSearch() {
+        btnToggleSearch.addEventListener('click', () => {
+            const isHidden = searchBar.style.display === 'none';
+            searchBar.style.display = isHidden ? 'flex' : 'none';
+            if (isHidden) {
+                inputSearch.focus();
+                // If opening, maybe we don't clear immediately, let user decide
+            } else {
+                clearSearch();
+            }
+        });
+
+        btnSearchClose.addEventListener('click', () => {
+            searchBar.style.display = 'none';
+            clearSearch();
+        });
+
+        btnSearchExec.addEventListener('click', performSearch);
+        inputSearch.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') performSearch();
+        });
+    }
+
+    function performSearch() {
+        const keyword = inputSearch.value.trim();
+        if (!keyword) {
+            clearSearch();
+            return;
+        }
+
+        searchKeyword = keyword.toLowerCase();
+        
+        // Find matches in history
+        const matches = [];
+        receivedLines.forEach((lineObj, index) => {
+            if (checkFilter(lineObj.text)) {
+                if (lineObj.text.toLowerCase().includes(searchKeyword)) {
+                    matches.push({
+                        id: lineObj.id,
+                        text: lineObj.text,
+                        index: index // absolute index in receivedLines
+                    });
+                }
+            }
+        });
+
+        // Update Stats
+        searchStats.textContent = `找到 ${matches.length} 条结果`;
+        
+        // Show Panel and Resizer
+        searchResultsPanel.style.display = 'flex';
+        panelResizer.style.display = 'block';
+        searchResultsList.innerHTML = '';
+
+        // Populate Result List
+        matches.forEach(match => {
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.title = match.text; // Tooltip for full text
+            
+            const lineNum = document.createElement('span');
+            lineNum.className = 'search-result-line-num';
+            lineNum.textContent = `#${match.id}`;
+            
+            const content = document.createElement('span');
+            content.textContent = match.text.substring(0, 100); // Preview
+
+            item.appendChild(lineNum);
+            item.appendChild(content);
+            
+            item.addEventListener('click', () => {
+                const targetEl = document.getElementById(`log-line-${match.id}`);
+                if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Optional: blink effect
+                    targetEl.style.transition = 'background-color 0.5s';
+                    const origBg = targetEl.style.backgroundColor;
+                    targetEl.style.backgroundColor = '#81d4fa'; // Light Blue highlight for jump
+                    setTimeout(() => {
+                        targetEl.style.backgroundColor = '';
+                    }, 1000);
+                } else {
+                    alert('该行已不在当前视图缓存中');
+                }
+            });
+            
+            searchResultsList.appendChild(item);
+        });
+
+        // Re-render main area to apply highlighting
+        rerenderReceiveArea();
+    }
+
+    function clearSearch() {
+        searchKeyword = '';
+        searchStats.textContent = '';
+        searchResultsPanel.style.display = 'none';
+        panelResizer.style.display = 'none';
+        rerenderReceiveArea();
     }
 
     // Event Listeners
@@ -121,6 +238,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         window.electronAPI.updateTitleBar(overlayConfig);
         localStorage.setItem('app-theme', themeName);
+    }
+
+    function initResizer() {
+        let isResizing = false;
+
+        panelResizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            document.body.style.cursor = 'ns-resize';
+            e.preventDefault(); // Prevent text selection
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            // Calculate new height based on mouse position relative to container bottom
+            // The container is searchResultsPanel.parentElement (receive-container)
+            const container = searchResultsPanel.parentElement;
+            const containerRect = container.getBoundingClientRect();
+            
+            // Height = Bottom of container - Mouse Y
+            // We need to clamp this value
+            let newHeight = containerRect.bottom - e.clientY;
+            
+            const minHeight = 50;
+            const maxHeight = containerRect.height - 100; // Leave some space for receive area
+            
+            if (newHeight < minHeight) newHeight = minHeight;
+            if (newHeight > maxHeight) newHeight = maxHeight;
+            
+            searchResultsPanel.style.height = `${newHeight}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+            }
+        });
     }
 
     // Data Handling
@@ -401,14 +556,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const trimmedLine = line.trim();
                     if (trimmedLine === '') return;
 
-                    // Store history
-                    receivedLines.push(trimmedLine);
+                    // Store history with ID
+                    const lineObj = {
+                        id: ++globalLineId,
+                        text: trimmedLine
+                    };
+                    
+                    receivedLines.push(lineObj);
                     if (receivedLines.length > MAX_STORED_LINES) {
                         receivedLines.shift();
                     }
                     
                     if (checkFilter(trimmedLine)) {
-                        htmlOutput += processLogLine(trimmedLine) + '\n'; 
+                        htmlOutput += processLogLine(lineObj); 
                     }
                 });
 
@@ -428,9 +588,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         receiveArea.innerHTML = '';
         let htmlOutput = '';
         
-        receivedLines.forEach(line => {
-            if (checkFilter(line)) {
-                htmlOutput += processLogLine(line) + '\n';
+        receivedLines.forEach(lineObj => {
+            if (checkFilter(lineObj.text)) {
+                htmlOutput += processLogLine(lineObj);
             }
         });
 
@@ -450,7 +610,46 @@ document.addEventListener('DOMContentLoaded', async () => {
             .replace(/'/g, "&#039;");
     }
 
-    function processLogLine(line) {
+    function processLogLine(lineObj) {
+        const lineText = lineObj.text;
+        const lineId = lineObj.id;
+        
+        // Highlight logic
+        let isSearchMatch = false;
+        let highlightedText = lineText;
+        let rowClass = '';
+
+        if (searchKeyword && lineText.toLowerCase().includes(searchKeyword)) {
+            isSearchMatch = true;
+            rowClass = 'search-highlight-row';
+            // Highlight keyword
+            const regex = new RegExp(`(${escapeRegExp(searchKeyword)})`, 'gi');
+            highlightedText = lineText.replace(regex, '<span class="search-highlight-kw">$1</span>');
+        } else {
+            highlightedText = escapeHtml(lineText);
+        }
+
+        // Parse Standard Log Format if NO search highlight was done on text (to avoid breaking HTML tags)
+        // If search highlight is active, we skip complex log parsing to avoid breaking the keyword highlight spans
+        // OR we can try to parse first, then highlight? 
+        // Simpler: If search match, just show highlighted raw text to be safe, OR wrap parsing.
+        
+        // For now, if search matched, we use simple display to ensure highlighting works correctly.
+        // If not, we use the complex log parser.
+        
+        let innerHTML = '';
+
+        if (isSearchMatch) {
+             innerHTML = `<span class="log-content">${highlightedText}</span>`;
+        } else {
+             innerHTML = parseLogLineContent(lineText);
+        }
+
+        return `<div id="log-line-${lineId}" class="log-line ${rowClass}"><span class="log-line-num">${lineId}</span>${innerHTML}</div>`;
+    }
+
+    // New helper to keep parsing logic separate
+    function parseLogLineContent(line) {
         const regex = /^(\ [\d\.]+\ ] )(\s*<[^>]+>[\.\-](\d+))?(\s*\[[^\]]+\])?(.*)$/;
         const match = line.match(regex);
 
@@ -479,6 +678,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             return `<span class="log-content">${escapedLine}</span>`;
         }
+    }
+
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     function updateUIState(connected) {

@@ -251,11 +251,147 @@ select, button, input[type="text"] {
 
 .filter-tag .remove:hover { color: #eee; }
 
+/* Search Bar Styles */
+.search-bar {
+    padding: 8px 10px;
+    background-color: #fff9c4; /* Light Yellow */
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+body.theme-dark .search-bar {
+    background-color: #4a4a4a;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 5px;
+    flex: 1;
+    align-items: center;
+}
+
+.search-input-group input {
+    width: 200px;
+}
+
+.search-stats {
+    font-size: 12px;
+    color: #666;
+    margin-left: 10px;
+}
+
+body.theme-dark .search-stats {
+    color: #aaa;
+}
+
+/* Resizer Handle */
+.panel-resizer {
+    height: 5px;
+    background-color: #e0e0e0;
+    cursor: ns-resize;
+    flex-shrink: 0;
+    border-top: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.panel-resizer:hover {
+    background-color: var(--primary-color);
+}
+
+/* Search Results Panel */
+.search-results-panel {
+    height: 150px; /* Initial height */
+    width: 100%;
+    /* border-top: 1px solid var(--border-color); Removed, handled by resizer now */
+    border-left: none; 
+    background-color: var(--panel-bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.search-results-header {
+    padding: 5px 10px;
+    background-color: var(--header-bg);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.search-results-list {
+    flex: 1;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+}
+
+.search-result-item {
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-result-item:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.search-result-line-num {
+    color: #888;
+    margin-right: 5px;
+    font-size: 10px;
+}
+
+/* Search Highlighting */
+.search-highlight-row {
+    background-color: #ffe0b2; /* Light Orange Row */
+    display: block; /* Ensure it takes full width */
+}
+
+body.theme-dark .search-highlight-row {
+    background-color: #5d4037; /* Dark Brown */
+}
+
+.search-highlight-kw {
+    background-color: #ff9800; /* Orange */
+    color: #000;
+    font-weight: bold;
+}
+
 #receive-area {
     white-space: pre-wrap;
     word-break: break-all;
     overflow-x: hidden;
     font-size: 13px; /* Slightly smaller for logs */
+}
+
+/* Log Line Structure */
+.log-line {
+    display: flex;
+    align-items: flex-start;
+}
+
+.log-line-num {
+    display: inline-block;
+    min-width: 40px;
+    padding-right: 10px;
+    margin-right: 10px;
+    text-align: right;
+    color: #999;
+    border-right: 1px solid var(--border-color);
+    user-select: none; /* Don't select line numbers */
+    font-size: 11px;
+    line-height: inherit; /* Align with text */
+    flex-shrink: 0;
+}
+
+body.theme-dark .log-line-num {
+    color: #666;
+    border-right-color: #444;
 }
 
 /* Log Highlighting */
