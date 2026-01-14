@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // State
     let filterRules = []; // Array of { text, type }
+    let receivedLines = [];
+    const MAX_STORED_LINES = 20000;
     
     // Auto Send Controls
     const chkAutoSend = document.getElementById('chk-auto-send');
@@ -42,6 +44,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     await refreshPorts();
     initSettings();
     initTheme();
+
+    // Helper: Check if a line should be displayed based on current filters
+    function checkFilter(line) {
+        const lowerLine = line.toLowerCase();
+        
+        // 1. Check Exclude Rules first
+        const isExcluded = filterRules.some(r => r.type === 'exclude' && lowerLine.includes(r.text));
+        if (isExcluded) return false;
+        
+        // 2. Check Include Rules
+        const includeRules = filterRules.filter(r => r.type === 'include');
+        if (includeRules.length > 0) {
+            const isIncluded = includeRules.some(r => lowerLine.includes(r.text));
+            if (!isIncluded) return false;
+        }
+        
+        return true;
+    }
 
     // Event Listeners
     btnRefreshPorts.addEventListener('click', refreshPorts);
@@ -154,6 +174,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 renderFilterTags();
             });
         });
+
+        // Refresh display based on new rules
+        rerenderReceiveArea();
     }
 
     // Enter to Send
@@ -206,6 +229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     btnClearRecv.addEventListener('click', () => {
         receiveArea.textContent = '';
+        receivedLines = [];
     });
     
     btnSaveRecv.addEventListener('click', async () => {
@@ -367,18 +391,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 lines.forEach(line => {
                     const trimmedLine = line.trim();
                     if (trimmedLine === '') return;
-                    
-                    const lowerLine = trimmedLine.toLowerCase();
-                    const isExcluded = filterRules.some(r => r.type === 'exclude' && lowerLine.includes(r.text));
-                    if (isExcluded) return;
-                    
-                    const includeRules = filterRules.filter(r => r.type === 'include');
-                    if (includeRules.length > 0) {
-                        const isIncluded = includeRules.some(r => lowerLine.includes(r.text));
-                        if (!isIncluded) return;
+
+                    // Store history
+                    receivedLines.push(trimmedLine);
+                    if (receivedLines.length > MAX_STORED_LINES) {
+                        receivedLines.shift();
                     }
                     
-                    htmlOutput += processLogLine(trimmedLine) + '\n'; 
+                    if (checkFilter(trimmedLine)) {
+                        htmlOutput += processLogLine(trimmedLine) + '\n'; 
+                    }
                 });
 
                 receiveArea.insertAdjacentHTML('beforeend', htmlOutput);
@@ -386,6 +408,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         // Auto scroll
+        if (chkAutoScroll.checked) {
+            receiveArea.scrollTop = receiveArea.scrollHeight;
+        }
+    }
+
+    function rerenderReceiveArea() {
+        if (chkHexShow.checked) return; // Do not filter/rerender in HEX mode for now
+
+        receiveArea.innerHTML = '';
+        let htmlOutput = '';
+        
+        receivedLines.forEach(line => {
+            if (checkFilter(line)) {
+                htmlOutput += processLogLine(line) + '\n';
+            }
+        });
+
+        receiveArea.insertAdjacentHTML('beforeend', htmlOutput);
+        
         if (chkAutoScroll.checked) {
             receiveArea.scrollTop = receiveArea.scrollHeight;
         }
