@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await refreshPorts();
     initSettings();
     initTheme();
+    initSendPanelVisibility();
 
     // Helper: Check if a line should be displayed based on current filters
     function checkFilter(line) {
@@ -90,6 +91,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const savedTheme = localStorage.getItem('app-theme') || 'default';
         selTheme.value = savedTheme;
         applyTheme(savedTheme);
+    }
+
+    function initSendPanelVisibility() {
+        if (chkHideSend.checked) {
+            sendPanelContainer.style.display = 'none';
+        } else {
+            sendPanelContainer.style.display = 'flex';
+        }
     }
 
     function applyTheme(themeName) {
