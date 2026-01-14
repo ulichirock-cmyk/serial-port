@@ -1,6 +1,8 @@
 # RAYCOM 串口调试助手
 
 RAYCOM 是一款基于 Electron 和 Node.js 开发的跨平台串口调试工具。支持 Windows、macOS 和 Linux。
+<img width="1024" height="768" alt="image" src="https://github.com/user-attachments/assets/977e6c82-cd84-4487-a98f-43a87b03d57e" />
+
 
 ## 功能特性
 
