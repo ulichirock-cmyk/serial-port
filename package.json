@@ -22,8 +22,8 @@
     "electron-rebuild": "^3.2.9"
   },
   "build": {
-    "appId": "com.serialport.tool",
-    "productName": "串口调试助手",
+    "appId": "com.raycom.tool",
+    "productName": "RAYCOM",
     "files": [
       "src/**/*",
       "assets/**/*",
@@ -43,7 +43,7 @@
       "allowElevation": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "串口调试助手"
+      "shortcutName": "RAYCOM"
     },
     "mac": {
       "target": "dmg"
