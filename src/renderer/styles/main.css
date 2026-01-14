@@ -142,6 +142,40 @@ select, button, input[type="text"] {
     font-size: 12px;
 }
 
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    max-width: 16px;
+    border: 1px solid #999;
+    border-radius: 3px;
+    background-color: white;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 4px 0 0;
+    vertical-align: middle;
+    position: relative;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+input[type="checkbox"]:checked::after {
+    content: '\2714'; /* Heavy Check Mark */
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1;
+}
+
 /* Main Content */
 .main-content {
     flex: 1;
@@ -274,6 +308,23 @@ body.theme-dark .search-bar {
 
 .search-input-group input {
     width: 200px;
+}
+
+.search-opt {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid var(--border-color);
+    padding: 2px 5px;
+    border-radius: 4px;
+    background-color: var(--panel-bg);
+}
+
+.search-opt:hover {
+    background-color: #e2e6ea;
 }
 
 .search-stats {

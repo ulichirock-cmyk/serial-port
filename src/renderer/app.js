@@ -37,9 +37,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Search State
     let searchKeyword = '';
+    let isCaseSensitive = false;
+    let isWholeWord = false;
     const btnToggleSearch = document.getElementById('btn-toggle-search');
     const searchBar = document.getElementById('search-bar');
     const inputSearch = document.getElementById('input-search');
+    const chkSearchCase = document.getElementById('chk-search-case');
+    const chkSearchWhole = document.getElementById('chk-search-whole');
     const btnSearchExec = document.getElementById('btn-search-exec');
     const btnSearchClose = document.getElementById('btn-search-close');
     const searchStats = document.getElementById('search-stats');
@@ -101,6 +105,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputSearch.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') performSearch();
         });
+
+        chkSearchCase.addEventListener('change', performSearch);
+        chkSearchWhole.addEventListener('change', performSearch);
     }
 
     function performSearch() {
@@ -110,13 +117,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        searchKeyword = keyword.toLowerCase();
+        // Update state
+        searchKeyword = keyword; // keep original case
+        isCaseSensitive = chkSearchCase.checked;
+        isWholeWord = chkSearchWhole.checked;
+
+        // Build RegExp
+        const flags = isCaseSensitive ? 'g' : 'gi';
+        let pattern = escapeRegExp(searchKeyword);
+        if (isWholeWord) {
+            pattern = `\\b${pattern}\\b`;
+        }
         
+        let searchRegex;
+        try {
+            searchRegex = new RegExp(pattern, flags);
+        } catch (e) {
+            alert('无效的搜索模式');
+            return;
+        }
+
         // Find matches in history
         const matches = [];
         receivedLines.forEach((lineObj, index) => {
             if (checkFilter(lineObj.text)) {
-                if (lineObj.text.toLowerCase().includes(searchKeyword)) {
+                // Reset lastIndex for stateful global regex
+                searchRegex.lastIndex = 0; 
+                if (searchRegex.test(lineObj.text)) {
                     matches.push({
                         id: lineObj.id,
                         text: lineObj.text,
@@ -660,23 +687,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             const lineId = lineObj.id;
             const lineType = lineObj.type || 'rx'; // rx or tx
             
-            // Highlight logic
-            let isSearchMatch = false;
-            let highlightedText = lineText;
-            let rowClass = '';
-    
-            if (searchKeyword && lineText.toLowerCase().includes(searchKeyword)) {
-                isSearchMatch = true;
-                rowClass = 'search-highlight-row';
-                // Highlight keyword
-                const regex = new RegExp(`(${escapeRegExp(searchKeyword)})`, 'gi');
-                highlightedText = lineText.replace(regex, '<span class="search-highlight-kw">$1</span>');    
-            } else {
-                highlightedText = escapeHtml(lineText);
-            }
-    
-            let innerHTML = '';
-    
+                    // Highlight logic
+                    let isSearchMatch = false;
+                    let highlightedText = lineText;
+                    let rowClass = '';
+            
+                    if (searchKeyword) {
+                        // Re-build regex to be safe (or could store it globally)
+                        const flags = isCaseSensitive ? 'g' : 'gi';
+                        let pattern = escapeRegExp(searchKeyword);
+                        if (isWholeWord) {
+                            pattern = `\\b${pattern}\\b`;
+                        }
+                        const regex = new RegExp(`(${pattern})`, flags);
+            
+                        if (regex.test(lineText)) {
+                            isSearchMatch = true;
+                            rowClass = 'search-highlight-row';
+                            highlightedText = lineText.replace(regex, '<span class="search-highlight-kw">$1</span>');
+                        } else {
+                            highlightedText = escapeHtml(lineText);
+                        }
+                    } else {
+                        highlightedText = escapeHtml(lineText);
+                    }
+            
+                    let innerHTML = '';    
             if (lineType === 'tx') {
                 innerHTML = `<span class="log-tx">${highlightedText}</span>`;
             } else if (isSearchMatch) {
