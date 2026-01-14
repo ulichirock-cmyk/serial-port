@@ -53,7 +53,7 @@ npm run dev
 直接运行根目录下的脚本：
 
 ```bash
-build_win_installer.bat
+build_exe.bat
 ```
 
 或者使用 npm 命令：
@@ -82,7 +82,7 @@ npm run build:linux
 ```
 D:\serial_port\
 ├── assets/                # 静态资源（图标等）
-├── build_win_installer.bat # Windows 构建脚本
+├── build_exe.bat          # Windows 构建脚本
 ├── dist/                  # 构建产出目录
 ├── docs/                  # 开发文档
 ├── src/
