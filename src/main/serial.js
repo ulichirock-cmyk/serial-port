@@ -90,6 +90,12 @@ class SerialManager extends EventEmitter {
       throw new Error('Port not open');
     }
 
+    // Ensure data is compatible with SerialPort (Buffer or String)
+    // IPC might deliver Uint8Array which SerialPort might not like directly in some versions
+    if (typeof data !== 'string' && !Buffer.isBuffer(data)) {
+      data = Buffer.from(data);
+    }
+
     return new Promise((resolve, reject) => {
       this.port.write(data, (err) => {
         if (err) {

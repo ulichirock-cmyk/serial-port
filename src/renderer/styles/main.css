@@ -405,6 +405,7 @@ body.theme-dark .log-line-num {
 .log-warn { color: #f57c00; } /* Orange */
 .log-info { color: #1976d2; } /* Blue */
 .log-debug { color: #757575; } /* Grey */
+.log-tx { color: #2e7d32; font-style: italic; } /* Green Italic for TX */
 
 .send-actions {
     padding: 5px 10px;

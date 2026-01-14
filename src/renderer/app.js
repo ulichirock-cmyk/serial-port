@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const inputNewFilter = document.getElementById('input-new-filter');
     const btnAddFilter = document.getElementById('btn-add-filter');
     const filterTagsContainer = document.getElementById('filter-tags');
-    const chkHideSend = document.getElementById('chk-hide-send');
+    const chkShowSend = document.getElementById('chk-show-send');
     const chkHexShow = document.getElementById('chk-hex-show');
     const chkHexSend = document.getElementById('chk-hex-send');
     const sendPanelContainer = document.getElementById('send-panel-container');
@@ -211,10 +211,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function initSendPanelVisibility() {
-        if (chkHideSend.checked) {
-            sendPanelContainer.style.display = 'none';
-        } else {
+        if (chkShowSend.checked) {
             sendPanelContainer.style.display = 'flex';
+        } else {
+            sendPanelContainer.style.display = 'none';
         }
     }
 
@@ -351,12 +351,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Hide Send Area Logic
-    chkHideSend.addEventListener('change', () => {
-        if (chkHideSend.checked) {
-            sendPanelContainer.style.display = 'none';
-        } else {
+    // Show/Hide Send Area Logic
+    chkShowSend.addEventListener('change', () => {
+        if (chkShowSend.checked) {
             sendPanelContainer.style.display = 'flex';
+        } else {
+            sendPanelContainer.style.display = 'none';
         }
     });
     
@@ -527,6 +527,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             await window.electronAPI.writePort(dataToSend);
+            
+            // Local Echo: Display sent data
+            let displayData;
+            if (chkHexSend.checked) {
+                // For HEX, dataToSend is Uint8Array
+                const hexStr = window.AppUtils.toHexString(dataToSend);
+                displayData = `[TX] ${hexStr}`;
+            } else {
+                // For ASCII, dataToSend is string
+                displayData = `[TX] ${dataToSend}`;
+            }
+
+            // Create line object
+            const lineObj = {
+                id: ++globalLineId,
+                text: displayData,
+                type: 'tx' // Mark as transmitted
+            };
+
+            // Add to history
+            receivedLines.push(lineObj);
+            if (receivedLines.length > MAX_STORED_LINES) {
+                receivedLines.shift();
+            }
+
+            // Display if it passes filter
+            if (checkFilter(lineObj.text)) {
+                const html = processLogLine(lineObj);
+                receiveArea.insertAdjacentHTML('beforeend', html);
+                if (chkAutoScroll.checked) {
+                    receiveArea.scrollTop = receiveArea.scrollHeight;
+                }
+            }
+
         } catch (err) {
             console.error('Failed to send:', err);
             alert('发送失败: ' + err.message);
@@ -610,44 +644,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             .replace(/'/g, "&#039;");
     }
 
-    function processLogLine(lineObj) {
-        const lineText = lineObj.text;
-        const lineId = lineObj.id;
-        
-        // Highlight logic
-        let isSearchMatch = false;
-        let highlightedText = lineText;
-        let rowClass = '';
-
-        if (searchKeyword && lineText.toLowerCase().includes(searchKeyword)) {
-            isSearchMatch = true;
-            rowClass = 'search-highlight-row';
-            // Highlight keyword
-            const regex = new RegExp(`(${escapeRegExp(searchKeyword)})`, 'gi');
-            highlightedText = lineText.replace(regex, '<span class="search-highlight-kw">$1</span>');
-        } else {
-            highlightedText = escapeHtml(lineText);
+        function processLogLine(lineObj) {
+            const lineText = lineObj.text;
+            const lineId = lineObj.id;
+            const lineType = lineObj.type || 'rx'; // rx or tx
+            
+            // Highlight logic
+            let isSearchMatch = false;
+            let highlightedText = lineText;
+            let rowClass = '';
+    
+            if (searchKeyword && lineText.toLowerCase().includes(searchKeyword)) {
+                isSearchMatch = true;
+                rowClass = 'search-highlight-row';
+                // Highlight keyword
+                const regex = new RegExp(`(${escapeRegExp(searchKeyword)})`, 'gi');
+                highlightedText = lineText.replace(regex, '<span class="search-highlight-kw">$1</span>');    
+            } else {
+                highlightedText = escapeHtml(lineText);
+            }
+    
+            let innerHTML = '';
+    
+            if (lineType === 'tx') {
+                innerHTML = `<span class="log-tx">${highlightedText}</span>`;
+            } else if (isSearchMatch) {
+                 innerHTML = `<span class="log-content">${highlightedText}</span>`;
+            } else {
+                 innerHTML = parseLogLineContent(lineText);
+            }
+    
+            return `<div id="log-line-${lineId}" class="log-line ${rowClass}"><span class="log-line-num">${lineId}</span>${innerHTML}</div>`;
         }
-
-        // Parse Standard Log Format if NO search highlight was done on text (to avoid breaking HTML tags)
-        // If search highlight is active, we skip complex log parsing to avoid breaking the keyword highlight spans
-        // OR we can try to parse first, then highlight? 
-        // Simpler: If search match, just show highlighted raw text to be safe, OR wrap parsing.
-        
-        // For now, if search matched, we use simple display to ensure highlighting works correctly.
-        // If not, we use the complex log parser.
-        
-        let innerHTML = '';
-
-        if (isSearchMatch) {
-             innerHTML = `<span class="log-content">${highlightedText}</span>`;
-        } else {
-             innerHTML = parseLogLineContent(lineText);
-        }
-
-        return `<div id="log-line-${lineId}" class="log-line ${rowClass}"><span class="log-line-num">${lineId}</span>${innerHTML}</div>`;
-    }
-
     // New helper to keep parsing logic separate
     function parseLogLineContent(line) {
         const regex = /^(\ [\d\.]+\ ] )(\s*<[^>]+>[\.\-](\d+))?(\s*\[[^\]]+\])?(.*)$/;
